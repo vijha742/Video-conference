@@ -71,6 +71,7 @@ export default function VideoMeetComponent() {
 
   // store analyser nodes / intervals per stream to stop later
   const audioMonitors = useRef({}); // id -> { ctx, analyser, interval }
+  const activeSpeakerTimeouts = useRef({}); // id -> timeout handle for debouncing
 
   useEffect(() => {
     let interval;
@@ -109,7 +110,7 @@ export default function VideoMeetComponent() {
       // stop monitors
       Object.values(audioMonitors.current).forEach((m) => {
         clearInterval(m.interval);
-        try { m.ctx.close(); } catch {}
+        try { m.ctx.close(); } catch { }
       });
       localStream?.getTracks().forEach((t) => t.stop());
       Object.values(peersRef.current).forEach((c) => c.pc.close());
@@ -122,7 +123,7 @@ export default function VideoMeetComponent() {
   useEffect(() => {
     if (localVideoRef.current) localVideoRef.current.srcObject = localStream ?? null;
     if (meetingVideoRef.current) meetingVideoRef.current.srcObject = localStream ?? null;
-  }, [localStream]);
+  }, [localStream, askName]); // Re-run when askName changes to connect meetingVideoRef after join
 
   const safeParse = (s) => {
     try {
@@ -368,6 +369,8 @@ export default function VideoMeetComponent() {
       source.connect(analyser);
 
       const data = new Uint8Array(analyser.frequencyBinCount);
+      let currentSpeakingState = false; // Track local state to avoid unnecessary updates
+
       const interval = setInterval(() => {
         analyser.getByteFrequencyData(data);
         // compute simple RMS-ish volume
@@ -375,19 +378,37 @@ export default function VideoMeetComponent() {
         for (let i = 0; i < data.length; i++) sum += data[i];
         const avg = sum / data.length;
         // threshold tuned roughly; you may adjust
-        if (avg > 20) {
-          // speaking
-          setActiveSpeakerId(id);
-        } else {
-          // if local active and below threshold, reset after short delay
-          if (activeSpeakerId === id) {
-            // don't immediately clear to avoid flicker; set timeout elsewhere if needed
-            setTimeout(() => {
-              if (activeSpeakerId === id) setActiveSpeakerId(null);
-            }, 350);
+        const isSpeaking = avg > 20;
+
+        if (isSpeaking && !currentSpeakingState) {
+          // Started speaking
+          currentSpeakingState = true;
+          // Clear any existing timeout for this speaker
+          if (activeSpeakerTimeouts.current[id]) {
+            clearTimeout(activeSpeakerTimeouts.current[id]);
+            delete activeSpeakerTimeouts.current[id];
           }
+          // Only update if not already the active speaker (avoid re-render)
+          setActiveSpeakerId((current) => {
+            if (current !== id) return id;
+            return current;
+          });
+        } else if (!isSpeaking && currentSpeakingState) {
+          // Stopped speaking
+          currentSpeakingState = false;
+          // Debounce: wait before clearing active speaker
+          if (activeSpeakerTimeouts.current[id]) {
+            clearTimeout(activeSpeakerTimeouts.current[id]);
+          }
+          activeSpeakerTimeouts.current[id] = setTimeout(() => {
+            setActiveSpeakerId((current) => {
+              if (current === id) return null;
+              return current;
+            });
+            delete activeSpeakerTimeouts.current[id];
+          }, 500);
         }
-      }, 200);
+      }, 300); // Increased from 200ms to 300ms to reduce frequency
 
       audioMonitors.current[id] = { ctx, analyser, interval, source };
     } catch (err) {
@@ -403,8 +424,14 @@ export default function VideoMeetComponent() {
     clearInterval(m.interval);
     try {
       m.ctx.close();
-    } catch {}
+    } catch { }
     delete audioMonitors.current[id];
+
+    // Clear any pending timeout for this speaker
+    if (activeSpeakerTimeouts.current[id]) {
+      clearTimeout(activeSpeakerTimeouts.current[id]);
+      delete activeSpeakerTimeouts.current[id];
+    }
   };
 
   // -----------------------
