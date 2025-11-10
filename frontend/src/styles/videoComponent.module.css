@@ -1,0 +1,178 @@
+/* Root container */
+.meetVideoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0a1329 0%, #040813 100%);
+  color: #fff;
+  overflow: hidden;
+  font-family: "Inter", "Roboto", sans-serif;
+}
+
+/* Top control bar */
+.controlBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 10;
+}
+
+/* General button style */
+.controlBar button,
+.controlBar .MuiIconButton-root {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.controlBar button:hover,
+.controlBar .MuiIconButton-root:hover {
+  background: rgba(0, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+/* Video grid */
+.videosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  padding: 24px;
+  justify-items: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+/* Video box container */
+.videoBox {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b1120;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.videoBox:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
+}
+
+/* Active speaker glow */
+.activeSpeaker {
+  border: 2px solid #00e0ff;
+  box-shadow: 0 0 25px rgba(0, 224, 255, 0.6);
+}
+
+/* Hand raised pulse */
+.handRaised {
+  border: 2px solid #facc15;
+  box-shadow: 0 0 25px rgba(250, 204, 21, 0.6);
+}
+
+/* Video stream element */
+.videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+  display: block;
+}
+
+/* Participant name tag */
+.usernameTag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Live caption bubble */
+.captionBox {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 1rem;
+  max-width: 90%;
+  text-align: center;
+  animation: fadeInOut 4s ease forwards;
+}
+
+/* Fade animation for captions */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+  10%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+}
+
+/* Participants Drawer */
+.MuiDrawer-paper {
+  background: rgba(10, 20, 40, 0.95) !important;
+  color: #fff !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Chat drawer */
+.chatDrawer {
+  background: rgba(10, 20, 40, 0.95);
+  color: white;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat messages */
+.chatMessage {
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  max-width: 80%;
+  word-wrap: break-word;
+  transition: all 0.25s ease;
+}
+
+.chatMessage.you {
+  background: rgba(0, 255, 255, 0.2);
+  align-self: flex-end;
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+  .controlBar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .videosGrid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .videoBox {
+    max-width: 100%;
+  }
+}
